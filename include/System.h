@@ -53,6 +53,7 @@ class System{
     public:
         System(const std::string& proteinFile, const std::string& optionsFile);
 
+        [[nodiscard]] constexpr double electrostaticPotential(const Vector& position) const;
         [[nodiscard]] constexpr Vector electricField(const Vector& position) const;
         [[nodiscard]] std::array<std::array<double, 3>, 3>  electricFieldGradient(const Vector& position) const;
         constexpr void addPointCharge(const PointCharge& pc);
@@ -139,13 +140,24 @@ constexpr void System::addPosition(const Vector& pos){
     _points.push_back(pos);
 }
 
+constexpr double System::electrostaticPotential(const Vector& position) const{
+    double result = 0;
+    double dNorm = 0;
+
+    for (const auto& pc : _pointCharges){
+        dNorm = (position - pc.coordinate).norm();
+        result += (pc.charge/dNorm);
+    }
+    return (result/(4.0 * PI * PERM_SPACE * _dielectric));
+}
+
 constexpr Vector System::electricField(const Vector &position) const {
     Vector result;
 
     for (const auto& pc : _pointCharges){
         Vector d = position - pc.coordinate;
         double dNorm = d.norm();
-        result += ((pc.charge * d) / (dNorm*dNorm*dNorm));
+        result += ((pc.charge * d)/ (dNorm*dNorm*dNorm));
     }
 
     return result/(4.0 * PI * PERM_SPACE * _dielectric);
@@ -174,14 +186,22 @@ std::array<std::array<double, 3>, 3> System::electricFieldGradient (const Vector
 
 void System::calculate (const bool efg) const {
 
-    SPDLOG_INFO("Calculating electric field at points (V/Ang)");
+    SPDLOG_INFO("Calculating electric field at points [V/Ang]");
     SPDLOG_INFO("[x, y, z] [Ex, Ey, Ez] Mag");
     for (const auto& point: _points){
         auto result = this->electricField(point);
         SPDLOG_INFO("{} {} {}", point, result, result.norm());
     }
+
+    SPDLOG_INFO("Calculating electrostatic potential [V]");
+    SPDLOG_INFO("[x, y, z] [Phi]");
+    for (const auto& point: _points){
+        auto result = this->electrostaticPotential(point);
+        SPDLOG_INFO("{} {}", point, result);
+    }
+
     if (efg){
-        SPDLOG_INFO("Calculating electric field gradient! (V/Ang^2)");
+        SPDLOG_INFO("Calculating electric field gradient! [V/Ang^2]");
         for(const auto& point: _points){
             auto result = this->electricFieldGradient(point);
 
