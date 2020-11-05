@@ -27,7 +27,7 @@ class Vector{
         [[nodiscard]] constexpr double dot(const Vector& vec) const;
 
         constexpr Vector& operator=(const Vector &vec);
-        constexpr bool operator==(const Vector& vec) const;
+        inline bool operator==(const Vector& vec) const {return _values == vec._values;};
         constexpr Vector operator+(const Vector &vec) const;
         constexpr Vector& operator+=(const Vector &vec);
         constexpr Vector operator-(const Vector &vec) const;
@@ -94,10 +94,6 @@ constexpr Vector& Vector::operator=(const Vector &vec){
     }
 
     return *this;
-}
-
-constexpr bool Vector::operator==(const Vector& vec) const{
-    return _values == vec._values;
 }
 
 constexpr Vector Vector::operator+(const Vector &vec) const{

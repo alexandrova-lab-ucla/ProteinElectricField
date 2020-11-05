@@ -53,10 +53,21 @@ class System{
     public:
         System(const std::string& proteinFile, const std::string& optionsFile);
 
-        [[nodiscard]] constexpr Vector electricField(const Vector& position) const;
+        [[nodiscard]] inline Vector electricField(const Vector& position) const {
+            Vector result;
+
+            for (const auto& pc : _pointCharges){
+                Vector d = position - pc.coordinate;
+                double dNorm = d.norm();
+                result += ((pc.charge * d) / (dNorm*dNorm*dNorm));
+            }
+
+            return result/(4.0 * PI * PERM_SPACE * _dielectric);
+        };
+        
         [[nodiscard]] std::array<std::array<double, 3>, 3>  electricFieldGradient(const Vector& position) const;
-        constexpr void addPointCharge(const PointCharge& pc);
-        constexpr void addPosition(const Vector& pos);
+        inline void addPointCharge(const PointCharge& pc) {_pointCharges.push_back(pc);};
+        inline void addPosition(const Vector& pos) {_points.push_back(pos);};
         void calculate(const bool efg) const;
 
     private:
@@ -129,26 +140,6 @@ System::System(const std::string& proteinFile, const std::string& optionsFile) :
         SPDLOG_ERROR("Could not open options file to read!");
     }
 
-}
-
-constexpr void System::addPointCharge(const PointCharge& pc){
-    _pointCharges.push_back(pc);
-}
-
-constexpr void System::addPosition(const Vector& pos){
-    _points.push_back(pos);
-}
-
-constexpr Vector System::electricField(const Vector &position) const {
-    Vector result;
-
-    for (const auto& pc : _pointCharges){
-        Vector d = position - pc.coordinate;
-        double dNorm = d.norm();
-        result += ((pc.charge * d) / (dNorm*dNorm*dNorm));
-    }
-
-    return result/(4.0 * PI * PERM_SPACE * _dielectric);
 }
 
 std::array<std::array<double, 3>, 3> System::electricFieldGradient (const Vector &position) const {
