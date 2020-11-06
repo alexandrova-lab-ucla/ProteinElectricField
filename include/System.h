@@ -65,6 +65,17 @@ class System{
             return result/(4.0 * PI * PERM_SPACE * _dielectric);
         };
         
+        [[nodiscard]] inline double electrostaticPotential(const Vector& position) const {
+            double result = 0;
+            double dNorm = 0;
+
+            for (const auto& pc : _pointCharges){
+                dNorm = (position - pc.coordinate).norm();
+                result += (pc.charge/dNorm);
+            }
+            return (result/(4.0 * PI * PERM_SPACE * _dielectric));
+        };
+
         [[nodiscard]] std::array<std::array<double, 3>, 3>  electricFieldGradient(const Vector& position) const;
         inline void addPointCharge(const PointCharge& pc) {_pointCharges.push_back(pc);};
         inline void addPosition(const Vector& pos) {_points.push_back(pos);};
@@ -165,14 +176,22 @@ std::array<std::array<double, 3>, 3> System::electricFieldGradient (const Vector
 
 void System::calculate (const bool efg) const {
 
-    SPDLOG_INFO("Calculating electric field at points (V/Ang)");
+    SPDLOG_INFO("Calculating electric field at points [V/Ang]");
     SPDLOG_INFO("[x, y, z] [Ex, Ey, Ez] Mag");
     for (const auto& point: _points){
         auto result = this->electricField(point);
         SPDLOG_INFO("{} {} {}", point, result, result.norm());
     }
+
+    SPDLOG_INFO("Calculating electrostatic potential [V]");
+    SPDLOG_INFO("[x, y, z] [Phi]");
+    for (const auto& point: _points){
+        auto result = this->electrostaticPotential(point);
+        SPDLOG_INFO("{} {}", point, result);
+    }
+
     if (efg){
-        SPDLOG_INFO("Calculating electric field gradient! (V/Ang^2)");
+        SPDLOG_INFO("Calculating electric field gradient! [V/Ang^2]");
         for(const auto& point: _points){
             auto result = this->electricFieldGradient(point);
 
