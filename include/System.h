@@ -53,6 +53,14 @@ class System{
     public:
         System(const std::string& proteinFile, const std::string& optionsFile);
 
+        [[nodiscard]] inline double totalCharge() const{
+            double result = 0;
+            for (const auto& pc: _pointCharges){
+                result += pc.charge;
+            }
+            return result;
+        }
+
         [[nodiscard]] inline Vector electricField(const Vector& position) const {
             Vector result;
 
@@ -176,6 +184,8 @@ std::array<std::array<double, 3>, 3> System::electricFieldGradient (const Vector
 
 void System::calculate (const bool efg) const {
 
+    SPDLOG_INFO("Total charge: {}", this->totalCharge());
+    
     SPDLOG_INFO("Calculating electric field at points [V/Ang]");
     SPDLOG_INFO("[x, y, z] [Ex, Ey, Ez] Mag");
     for (const auto& point: _points){
